@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prefabs>
+  <decoration type="model" name="house_old_bungalow_02" position="-21,48,64" rotation="0" y_is_groundlevel="true" />
+  <decoration type="model" name="house_old_bungalow_03" position="55,48,-53" rotation="1" y_is_groundlevel="true" />
+  <decoration type="model" name="house_old_bungalow_04" position="-97,48,-53" rotation="3" y_is_groundlevel="true" />
+</prefabs>
