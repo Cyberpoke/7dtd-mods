@@ -1,0 +1,12 @@
+# C# build output
+bin/
+obj/
+*.user
+.vs/
+
+# Packaged mod zips
+dist/
+
+# Python
+__pycache__/
+*.pyc
