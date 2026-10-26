@@ -14,5 +14,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install world generator dependencies
+        run: python -m pip install -r worlds/CulDeSac/requirements.txt
+
+      - name: Generate CulDeSac
+        run: python worlds/CulDeSac/generate.py
+
       - name: Validate mod folders
-        run: python3 scripts/validate.py
+        run: python scripts/validate.py
+
+      - name: Package CulDeSac
+        run: python scripts/package.py CulDeSac

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spawnpoints>
+  <spawnpoint position="0,48,-118" rotation="0,0,0" />
+  <spawnpoint position="-6,48,-118" rotation="0,0,0" />
+  <spawnpoint position="6,48,-118" rotation="0,0,0" />
+  <spawnpoint position="0,48,-128" rotation="0,0,0" />
+</spawnpoints>

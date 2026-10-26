@@ -12,7 +12,7 @@ A mod folder contains:
 - `Config/*.xml` — XPath patches for the game's XML
 - `Harmony/` — an optional C# project, only when the mod needs a DLL
 
-`scripts`, `.github`, and `dist` belong to the repo, not to the game.
+`scripts`, `.github`, `dist`, and `worlds` belong to the repo, not to the game. `worlds/` holds generators. The world they build is still a top-level folder.
 
 `ModInfo.xml` looks like this:
 
@@ -33,6 +33,8 @@ Older mods can use a `<ModInfo>` root instead of `<xml>`. The same fields are re
 Unzip the mod folder into the game's `Mods/` directory.
 
 XML-only modlets are server-side friendly. DLL mods need EAC off.
+
+CulDeSac is a world, not a modlet. Install it with `CulDeSac/INSTALL.md`. It goes in the server's `Data/Worlds/` folder, not in `Mods/`.
 
 ## Releases
 
@@ -56,3 +58,4 @@ python scripts/validate.py
 
 | Mod | Version | Description |
 | --- | ------- | ----------- |
+| CulDeSac | 0.1 | Three pine-forest houses on a cul-de-sac. See `CulDeSac/INSTALL.md`. |
