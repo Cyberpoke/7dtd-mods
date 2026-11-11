@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QuickStackPlus>
+	<!-- Meters. The server clamps this to 20. -->
+	<RangeMeters>20</RangeMeters>
+	<!-- Unity KeyCode names. None disables a hotkey. Restart the game after editing. -->
+	<!-- Shift+this key runs the double-click nearby action (qsp type). -->
+	<HotkeyNearby>Keypad7</HotkeyNearby>
+	<HotkeyVehicleMatch>Keypad8</HotkeyVehicleMatch>
+	<HotkeyVehicleAll>Keypad9</HotkeyVehicleAll>
+</QuickStackPlus>

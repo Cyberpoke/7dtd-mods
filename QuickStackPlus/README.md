@@ -1,0 +1,130 @@
+# Quick Stack Plus
+
+Quick Stack Plus adds three backpack actions for 7 Days to Die **V3.4.0 (b6)**, Steam build **26167630**. It is a small Harmony DLL for a server with Easy Anti-Cheat off. Install the same folder on the dedicated server and on every client.
+
+The server does the move. A client only asks. Distance, ownership, and locks are checked again from the server's copy of the world.
+
+This mod is based on [Quick Stack Nearby](https://github.com/Path-of-7D2D/Quick-Stack-Nearby) by Path-of-7D2D (MIT, commit `cee585d`). See [LICENSE](LICENSE).
+
+## What it does
+
+The toolbelt is never touched. Locked backpack slots are never touched.
+
+1. **Quick stack to nearby boxes.** A single click tops up existing partial stacks of the same item in player-owned storage within range. It uses the game's own `TryStackItem` rule (same item type, and only while the destination stack still has room). It does not start a new stack in a box. A second click on that same button within 0.4 seconds runs the type pass: for each unlocked backpack item, boxes that already hold that item id are topped off, and any remainder goes into an empty unlocked slot in those same boxes. A box with none of that item is left alone. Vehicles are not used by this pass. The first click still runs immediately; the second click runs the wider pass afterward. `qsp type` and Shift plus the nearby hotkey run only the wider pass.
+2. **Matched to my vehicle.** The same top-up, into the player's own vehicle.
+3. **Everything to my vehicle.** Moves every unlocked backpack slot into that vehicle. Existing stacks are filled first, then empty unlocked vehicle slots are used.
+
+Range defaults to 20 meters and is **clamped to 20 on the server**, even if `settings.xml` asks for more. The dedicated server's `settings.xml` is the range that is used. Each player's own `settings.xml` supplies their hotkeys.
+
+A storage box counts when `TEFeatureStorage.ItemGrid.PlayerOwned` is set and the player can use it: unlocked, or locked and the player is the owner or on the allowed list. The id checked on a dedicated server is `ClientInfo.InternalId`. A box that anyone currently has open, including the player who asked, is skipped so that open copy cannot write back over the move.
+
+A vehicle counts only when `GetOwner()` is set and equals that same id. `EntityVehicle.IsOwner` is not used, because it returns true for an unowned vehicle. A vehicle with a driver, or with its storage or collect lock held, is skipped. If several of the player's vehicles are in range, the nearest one that is not in use is chosen.
+
+Feedback is a short tooltip, for example `Stacked 37 items into 4 boxes` or `No owned vehicle within 20m`. The server also writes the same line to the log.
+
+## Controls
+
+Three buttons are added on the backpack header, just right of the INVENTORY title:
+
+| Button | Action | Default hotkey |
+| --- | --- | --- |
+| Similar-items up | Nearby boxes. Double-click within 0.4 s also fills empty slots in boxes that already hold that item | Keypad7, Shift+Keypad7 for the double-click action |
+| Minibike | Matching stacks into your vehicle | Keypad8 |
+| Store-all up | Everything into your vehicle | Keypad9 |
+
+Hotkeys work in game while no text field is focused. Set a key to `None` in `settings.xml` to disable it. Key names are Unity `KeyCode` names. Restart after editing the file.
+
+The nearby button's first click runs the top-off immediately. A second click within 0.4 seconds runs the type pass after that. Shift+Keypad7 and `qsp type` run the type pass once, without a preceding top-off click.
+
+Console and chat, permission level 0:
+
+```text
+qsp nearby
+qsp type
+qsp vehicle
+qsp all
+```
+
+`quickstack` is an alias. In chat this is `/qsp nearby` when the server allows players to run console commands.
+
+## Install
+
+Keep the game's `0_TFP_Harmony` mod installed. Copy this folder into `Mods` on the server and on each client:
+
+```text
+Mods/QuickStackPlus/ModInfo.xml
+Mods/QuickStackPlus/QuickStackPlus.dll
+Mods/QuickStackPlus/settings.xml
+Mods/QuickStackPlus/Config/
+Mods/QuickStackPlus/README.md
+Mods/QuickStackPlus/LICENSE
+```
+
+Launch with Easy Anti-Cheat disabled. `ModInfo.xml` sets `SkipWithAntiCheat` so the mod does not load under EAC.
+
+## Other mods on this server
+
+Checked against the public GitHub source of aedenthorn's CraftFromContainers (`aedenthorn/7D2DMods`, `CraftFromContainers.cs`). That mod patches crafting, repair, reload, trader purchase, recipe UI, and `EntityVehicle.takeFuel` / `EntityVehicle.hasGasCan`. Quick Stack Plus does not patch any of those. Its only Harmony patch is `XUiC_BackpackWindow.Init`, which that CraftFromContainers source does not patch. A newer CraftFromContainers build than that GitHub file could still add an `Init` patch; both postfixes can run, but they should not be given the same button id.
+
+StarterBicycle, TFP_CommandExtensions, Xample_MarkersMod, ZZZ_HornOpensDoors, and Oak's Pets and Guards are not patched here. This mod does not prefix its folder name, so it does not force a load order. The console command names are `qsp` and `quickstack`.
+
+## Build
+
+No CI. You need a .NET SDK that can build `net48` (SDK 8 works) and the game's managed DLLs. Do not commit those DLLs.
+
+`Managed7D2D` is the directory that contains `Assembly-CSharp.dll` (and the Unity modules next to it). `Harmony7D2D` is the directory that contains the game's `Mods/0_TFP_Harmony/0Harmony.dll`. For the dedicated-server reference set used here, both DLLs live in the same folder.
+
+```bash
+dotnet build src/QuickStackPlus.csproj -c Release \
+  -p:Managed7D2D="/path/to/managed" \
+  -p:Harmony7D2D="/path/to/0_TFP_Harmony" \
+  -p:InstallToGame=false
+```
+
+The build writes `QuickStackPlus.dll` into this folder. `InstallToGame` stays off unless you also pass `-p:Game7D2D` and `-p:InstallToGame=true`.
+
+The project was built with 0 warnings and 0 errors against the V3.4.0 (b6) assemblies from Steam depot 294421, manifest `2709746199376235989` (build 26167630).
+
+## XUi
+
+`Config/XUi_InGame/windows.xml` appends the three buttons with:
+
+```text
+/windows/window[@name='windowBackpack']/rect[@name='header']
+```
+
+That path matches exactly one node in `Data/Config/XUi_InGame/windows.xml` from V3.4.0 (b6). `windowBackpack` has three children: `header`, `actions` (that rect carries `controller="ContainerStandardControls"` at `pos="0,-46"`), and `content`. The controls rect is a sibling of the header. Button centers are `165,-22`, `201,-22`, and `237,-22`, just right of the INVENTORY label and clear of the creative trash button at `380,-22` and the currency label at `492`. Sprites are `ui_game_symbol_store_similar_up`, `ui_game_symbol_minibike`, and `ui_game_symbol_store_all_up`, all present in that vanilla file. The buttons are still descendants of the backpack window, so `GetChildById` in the `XUiC_BackpackWindow.Init` patch finds them. `qsp` remains available if the window is patched by something else.
+
+`Config/Localization.csv` and `ModInfo.xml` are well-formed XML/CSV. `settings.xml` sits next to `ModInfo.xml`, not under `Config/`, so the game's XML patcher does not treat it as a vanilla file.
+
+## In-game checks
+
+These cannot be confirmed from the compile:
+
+- The three buttons appear in the backpack header, just right of the INVENTORY title, clear of the creative trash button and the coin readout.
+- Keypad7 / Keypad8 / Keypad9 fire only while you are not typing.
+- A locked backpack slot and every toolbelt slot stay put in all three modes.
+- A single nearby click fills a partial stack and does not create a new stack, including when the box already contains that item and has an empty slot.
+- A second click within 0.4 seconds, Shift+Keypad7, or `qsp type` puts the rest into an empty slot of a box that already holds that item. A full stack of 300 9mm plus 150 more in the backpack moves those 150. A box that has none of that item stays unchanged.
+- A different quality that the vanilla stack button will not combine (stack size 1, or a different item type) stays in the backpack.
+- A world loot container, a locked box you are not allowed to use, and a box farther than the server range are unchanged.
+- An owned vehicle within range gets the match and the move-all actions. An unowned vehicle, someone else's vehicle, a vehicle you are driving, and a vehicle whose storage is open do not.
+- With two of your vehicles in range, the nearer free one is used.
+- On the dedicated server, a second player cannot lose or duplicate items if they open a box while you stack. A box they already have open is skipped.
+- After a remote stack, the backpack and the box or vehicle show the same counts on the client that asked and on the server. The server log line matches the tooltip.
+
+Multiplayer notes: the server applies the last backpack upload (`latestPlayerData.bagData`, sent by the game shortly after each backpack change). Avoid picking up, dropping, or dragging a stack in the same moment as the button. The client then applies the slots the server actually changed.
+
+## Changelog
+
+### 1.1.0
+
+- Double-click the nearby button within 0.4 seconds, press Shift plus the nearby hotkey, or run `qsp type` to place remainders into empty slots of boxes that already contain that item. A single click still only tops off partial stacks.
+
+### 1.0.1
+
+- Backpack buttons append to `windowBackpack`'s header, matching the V3.4.0 (b6) window.
+
+### 1.0.0
+
+- Nearby boxes, vehicle match, and move-all into your own vehicle.

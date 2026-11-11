@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configs>
+	<!--
+		Verified against Data/Config/XUi_InGame/windows.xml from V3.4.0 (b6), build 26167630.
+		windowBackpack's direct children are header, actions, and content. The
+		ContainerStandardControls rect is name="actions", a sibling of header at
+		pos 0,-46, so a path through header/ContainerStandardControls matches nothing.
+		These three buttons append to the header, to the right of the INVENTORY
+		label (the label box ends at x 222). Centers 165 / 201 / 237 stay clear of
+		the creative trash button at 380,-22 and the currency label at 492.
+		They are descendants of windowBackpack, so XUiC_BackpackWindow.GetChildById
+		still finds btnQuickStackNearby, btnQuickStackVehicle, and btnQuickStackVehicleAll.
+	-->
+	<append xpath="/windows/window[@name='windowBackpack']/rect[@name='header']">
+		<button depth="5" name="btnQuickStackNearby" sprite="ui_game_symbol_store_similar_up" tooltip_key="qspNearbyTip" pos="165,-22" style="icon32px, press, hover" pivot="center" sound="[paging_click]" />
+		<button depth="5" name="btnQuickStackVehicle" sprite="ui_game_symbol_minibike" tooltip_key="qspVehicleTip" pos="201,-22" style="icon32px, press, hover" pivot="center" sound="[paging_click]" />
+		<button depth="5" name="btnQuickStackVehicleAll" sprite="ui_game_symbol_store_all_up" tooltip_key="qspVehicleAllTip" pos="237,-22" style="icon32px, press, hover" pivot="center" sound="[paging_click]" />
+	</append>
+</configs>
