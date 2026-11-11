@@ -1,0 +1,87 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>QuickStackPlus</AssemblyName>
+    <RootNamespace>QuickStackPlus</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildProjectDirectory)\..\..\.build\</OutputPath>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <DebugType>portable</DebugType>
+    <!-- Pass -p:Managed7D2D and -p:Harmony7D2D. Do not commit the game DLLs. -->
+    <Managed7D2D Condition="'$(Managed7D2D)' == ''"></Managed7D2D>
+    <Harmony7D2D Condition="'$(Harmony7D2D)' == ''">$(Managed7D2D)</Harmony7D2D>
+    <InstallToGame Condition="'$(InstallToGame)' == ''">false</InstallToGame>
+    <ModFolder>$(MSBuildProjectDirectory)\..</ModFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(Managed7D2D)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(Managed7D2D)\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="LogLibrary">
+      <HintPath>$(Managed7D2D)\LogLibrary.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(Harmony7D2D)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(Managed7D2D)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(Managed7D2D)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="CheckGameReferences" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(Managed7D2D)\Assembly-CSharp.dll')"
+           Text="Assembly-CSharp.dll was not found. Build with -p:Managed7D2D=path\to\managed -p:Harmony7D2D=path\to\0_TFP_Harmony" />
+    <Error Condition="!Exists('$(Harmony7D2D)\0Harmony.dll')"
+           Text="0Harmony.dll was not found. Build with -p:Harmony7D2D=path\to\0_TFP_Harmony (the game's Mods\0_TFP_Harmony folder)." />
+  </Target>
+
+  <Target Name="CopyToModFolder" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModFolder)" SkipUnchangedFiles="false" />
+    <Message Importance="high" Text="Copied $(TargetFileName) to $(ModFolder)" />
+  </Target>
+
+  <Target Name="InstallToGameMods" AfterTargets="CopyToModFolder"
+          Condition="'$(InstallToGame)' != 'false' and '$(Game7D2D)' != '' and Exists('$(Game7D2D)\Mods')">
+    <PropertyGroup>
+      <GameModDir>$(Game7D2D)\Mods\QuickStackPlus</GameModDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(GameModDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameModDir)" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="$(ModFolder)\ModInfo.xml" DestinationFolder="$(GameModDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ModFolder)\settings.xml" DestinationFolder="$(GameModDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ModFolder)\LICENSE" DestinationFolder="$(GameModDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(ModFolder)\README.md" DestinationFolder="$(GameModDir)" SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <_ModConfigFiles Include="$(ModFolder)\Config\**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ModConfigFiles)"
+          DestinationFiles="@(_ModConfigFiles->'$(GameModDir)\Config\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="false" />
+    <Message Importance="high" Text="Installed to $(GameModDir)" />
+  </Target>
+
+</Project>

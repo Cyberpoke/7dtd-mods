@@ -1,0 +1,13 @@
+# Build output. The installable DLL is copied to QuickStackPlus/.
+.build/
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+.idea/
+
+# Proprietary game assemblies. Point the build at them; do not commit them.
+refs/
+*.dll
+!QuickStackPlus/QuickStackPlus.dll
