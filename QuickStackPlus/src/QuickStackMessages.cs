@@ -19,6 +19,12 @@ namespace QuickStackPlus
                             Noun(result.ContainerCount, "box");
                     }
 
+                    if (result.Mode == QuickStackMode.NearbyType)
+                    {
+                        return "Moved " + Noun(result.MovedItemCount, "item") + " into " +
+                            Noun(result.ContainerCount, "box");
+                    }
+
                     if (result.Mode == QuickStackMode.VehicleMatch)
                     {
                         return "Stacked " + Noun(result.MovedItemCount, "item") + " into your vehicle";
@@ -30,7 +36,7 @@ namespace QuickStackPlus
                 case QuickStackOutcome.Busy:
                     return "Nearby boxes are in use";
                 case QuickStackOutcome.NoMatch:
-                    if (result.Mode == QuickStackMode.Nearby)
+                    if (result.Mode == QuickStackMode.Nearby || result.Mode == QuickStackMode.NearbyType)
                     {
                         return "No matching stacks in nearby boxes";
                     }
@@ -41,6 +47,11 @@ namespace QuickStackPlus
                 case QuickStackOutcome.VehicleBusy:
                     return "Your vehicle is in use";
                 default:
+                    if (result.Mode == QuickStackMode.NearbyType)
+                    {
+                        return "No room in nearby boxes";
+                    }
+
                     return "No room in your vehicle";
             }
         }

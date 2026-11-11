@@ -1,4 +1,4 @@
 Key,File,Type,UsedInMainMenu,NoTranslate,KeepLoaded,english
-qspNearbyTip,XUi,XUi,,,,Quick stack matching items into nearby boxes
+qspNearbyTip,XUi,XUi,,,,Quick stack into nearby boxes. Double-click to also fill empty slots in boxes that already hold that item
 qspVehicleTip,XUi,XUi,,,,Quick stack matching items into your vehicle
 qspVehicleAllTip,XUi,XUi,,,,Move every unlocked backpack item into your vehicle

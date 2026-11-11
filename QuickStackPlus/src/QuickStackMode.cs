@@ -4,7 +4,8 @@ namespace QuickStackPlus
     {
         Nearby = 0,
         VehicleMatch = 1,
-        VehicleAll = 2
+        VehicleAll = 2,
+        NearbyType = 3
     }
 
     public enum QuickStackOutcome : byte

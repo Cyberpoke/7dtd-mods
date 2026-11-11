@@ -5,22 +5,51 @@ namespace QuickStackPlus
 {
     public static class QuickStackClient
     {
+        public const float DoubleClickSeconds = 0.4f;
+
         const float CooldownSeconds = 0.4f;
 
         static float nextAllowedTime;
+        static float lastNearbyClick = -1f;
+
+        public static void NotifyNearbyPressed()
+        {
+            float now = Time.unscaledTime;
+            if (lastNearbyClick >= 0f && now - lastNearbyClick <= DoubleClickSeconds)
+            {
+                lastNearbyClick = -1f;
+                Request(QuickStackMode.NearbyType, true);
+                return;
+            }
+
+            if (Request(QuickStackMode.Nearby, false))
+            {
+                lastNearbyClick = Time.unscaledTime;
+            }
+        }
 
         public static void Request(QuickStackMode mode)
         {
-            if (Time.unscaledTime < nextAllowedTime)
+            Request(mode, false);
+        }
+
+        static bool Request(QuickStackMode mode, bool ignoreCooldown)
+        {
+            if (!ignoreCooldown && Time.unscaledTime < nextAllowedTime)
             {
-                return;
+                return false;
             }
 
             World world = GameManager.Instance?.World;
             EntityPlayerLocal player = world?.GetPrimaryPlayer();
             if (world == null || player == null || player.IsDead())
             {
-                return;
+                return false;
+            }
+
+            if (mode == QuickStackMode.NearbyType)
+            {
+                lastNearbyClick = -1f;
             }
 
             nextAllowedTime = Time.unscaledTime + CooldownSeconds;
@@ -28,7 +57,7 @@ namespace QuickStackPlus
             if (connection == null)
             {
                 QuickStackMessages.Show(player, Failed(mode));
-                return;
+                return true;
             }
 
             if (connection.IsServer)
@@ -37,11 +66,12 @@ namespace QuickStackPlus
                 PlatformUserIdentifierAbs userId = client?.InternalId ?? PlatformManager.InternalLocalUserIdentifier;
                 QuickStackResult result = QuickStackService.Run(world, player, client, userId, mode);
                 QuickStackMessages.Show(player, result);
-                return;
+                return true;
             }
 
             connection.SendToServer(
                 NetPackageManager.GetPackage<NetPackageQuickStackRequest>().Setup(player.entityId, mode));
+            return true;
         }
 
         public static void ApplyResult(QuickStackResult result)
@@ -99,7 +129,14 @@ namespace QuickStackPlus
 
             if (Pressed(QuickStackConfig.HotkeyNearby))
             {
-                Request(QuickStackMode.Nearby);
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                {
+                    Request(QuickStackMode.NearbyType, true);
+                }
+                else
+                {
+                    Request(QuickStackMode.Nearby);
+                }
             }
             else if (Pressed(QuickStackConfig.HotkeyVehicleMatch))
             {
@@ -121,9 +158,9 @@ namespace QuickStackPlus
             return new QuickStackResult
             {
                 Mode = mode,
-                Outcome = mode == QuickStackMode.Nearby
-                    ? QuickStackOutcome.NoStorage
-                    : QuickStackOutcome.NoVehicle,
+                Outcome = mode == QuickStackMode.VehicleMatch || mode == QuickStackMode.VehicleAll
+                    ? QuickStackOutcome.NoVehicle
+                    : QuickStackOutcome.NoStorage,
                 RadiusMeters = QuickStackConfig.RadiusMeters
             };
         }

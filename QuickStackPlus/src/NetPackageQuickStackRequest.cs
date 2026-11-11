@@ -67,6 +67,7 @@ namespace QuickStackPlus
         static bool IsKnown(QuickStackMode stackMode)
         {
             return stackMode == QuickStackMode.Nearby ||
+                stackMode == QuickStackMode.NearbyType ||
                 stackMode == QuickStackMode.VehicleMatch ||
                 stackMode == QuickStackMode.VehicleAll;
         }

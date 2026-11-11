@@ -2,7 +2,7 @@
 <xml>
 	<Name value="QuickStackPlus" />
 	<DisplayName value="Quick Stack Plus" />
-	<Version value="1.0.1" />
+	<Version value="1.1.0" />
 	<Description value="Quick-stacks the backpack into nearby player storage or your own vehicle. Based on Quick Stack Nearby by Path-of-7D2D (MIT)." />
 	<Author value="Ken Tobey (Cyberpoke)" />
 	<Website value="https://github.com/Path-of-7D2D/Quick-Stack-Nearby" />

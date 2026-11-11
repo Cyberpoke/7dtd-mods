@@ -53,7 +53,7 @@ namespace QuickStackPlus
 
         static void OnNearby(XUiController sender, int mouseButton)
         {
-            QuickStackClient.Request(QuickStackMode.Nearby);
+            QuickStackClient.NotifyNearbyPressed();
         }
 
         static void OnVehicleMatch(XUiController sender, int mouseButton)

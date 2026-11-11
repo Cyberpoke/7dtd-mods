@@ -10,7 +10,7 @@ This mod is based on [Quick Stack Nearby](https://github.com/Path-of-7D2D/Quick-
 
 The toolbelt is never touched. Locked backpack slots are never touched.
 
-1. **Quick stack to nearby boxes.** Tops up existing partial stacks of the same item in player-owned storage within range. It uses the game's own `TryStackItem` rule (same item type, and only while the destination stack still has room). It does not start a new stack in a box.
+1. **Quick stack to nearby boxes.** A single click tops up existing partial stacks of the same item in player-owned storage within range. It uses the game's own `TryStackItem` rule (same item type, and only while the destination stack still has room). It does not start a new stack in a box. A second click on that same button within 0.4 seconds runs the type pass: for each unlocked backpack item, boxes that already hold that item id are topped off, and any remainder goes into an empty unlocked slot in those same boxes. A box with none of that item is left alone. Vehicles are not used by this pass. The first click still runs immediately; the second click runs the wider pass afterward. `qsp type` and Shift plus the nearby hotkey run only the wider pass.
 2. **Matched to my vehicle.** The same top-up, into the player's own vehicle.
 3. **Everything to my vehicle.** Moves every unlocked backpack slot into that vehicle. Existing stacks are filled first, then empty unlocked vehicle slots are used.
 
@@ -24,20 +24,23 @@ Feedback is a short tooltip, for example `Stacked 37 items into 4 boxes` or `No 
 
 ## Controls
 
-Three buttons are added on the backpack window, in the vanilla container-control row, to the left of the lock button:
+Three buttons are added on the backpack header, just right of the INVENTORY title:
 
 | Button | Action | Default hotkey |
 | --- | --- | --- |
-| Similar-items down | Nearby boxes | Keypad7 |
+| Similar-items up | Nearby boxes. Double-click within 0.4 s also fills empty slots in boxes that already hold that item | Keypad7, Shift+Keypad7 for the double-click action |
 | Minibike | Matching stacks into your vehicle | Keypad8 |
-| Store-all down | Everything into your vehicle | Keypad9 |
+| Store-all up | Everything into your vehicle | Keypad9 |
 
 Hotkeys work in game while no text field is focused. Set a key to `None` in `settings.xml` to disable it. Key names are Unity `KeyCode` names. Restart after editing the file.
+
+The nearby button's first click runs the top-off immediately. A second click within 0.4 seconds runs the type pass after that. Shift+Keypad7 and `qsp type` run the type pass once, without a preceding top-off click.
 
 Console and chat, permission level 0:
 
 ```text
 qsp nearby
+qsp type
 qsp vehicle
 qsp all
 ```
@@ -101,7 +104,8 @@ These cannot be confirmed from the compile:
 - The three buttons appear in the backpack header, just right of the INVENTORY title, clear of the creative trash button and the coin readout.
 - Keypad7 / Keypad8 / Keypad9 fire only while you are not typing.
 - A locked backpack slot and every toolbelt slot stay put in all three modes.
-- Nearby mode fills a partial stack and does not create a new stack, including when the box already contains that item and has an empty slot.
+- A single nearby click fills a partial stack and does not create a new stack, including when the box already contains that item and has an empty slot.
+- A second click within 0.4 seconds, Shift+Keypad7, or `qsp type` puts the rest into an empty slot of a box that already holds that item. A full stack of 300 9mm plus 150 more in the backpack moves those 150. A box that has none of that item stays unchanged.
 - A different quality that the vanilla stack button will not combine (stack size 1, or a different item type) stays in the backpack.
 - A world loot container, a locked box you are not allowed to use, and a box farther than the server range are unchanged.
 - An owned vehicle within range gets the match and the move-all actions. An unowned vehicle, someone else's vehicle, a vehicle you are driving, and a vehicle whose storage is open do not.
@@ -110,3 +114,17 @@ These cannot be confirmed from the compile:
 - After a remote stack, the backpack and the box or vehicle show the same counts on the client that asked and on the server. The server log line matches the tooltip.
 
 Multiplayer notes: the server applies the last backpack upload (`latestPlayerData.bagData`, sent by the game shortly after each backpack change). Avoid picking up, dropping, or dragging a stack in the same moment as the button. The client then applies the slots the server actually changed.
+
+## Changelog
+
+### 1.1.0
+
+- Double-click the nearby button within 0.4 seconds, press Shift plus the nearby hotkey, or run `qsp type` to place remainders into empty slots of boxes that already contain that item. A single click still only tops off partial stacks.
+
+### 1.0.1
+
+- Backpack buttons append to `windowBackpack`'s header, matching the V3.4.0 (b6) window.
+
+### 1.0.0
+
+- Nearby boxes, vehicle match, and move-all into your own vehicle.

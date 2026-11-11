@@ -25,6 +25,7 @@ namespace QuickStackPlus
         {
             return "Usage:\n" +
                 "  qsp nearby    Top up matching stacks in your boxes within range\n" +
+                "  qsp type      Also fill empty slots in boxes that already hold that item\n" +
                 "  qsp vehicle   Top up matching stacks in your own vehicle\n" +
                 "  qsp all       Move every unlocked backpack slot into your vehicle\n" +
                 "Locked backpack slots and the toolbelt are left alone. The server clamps range to 20 m.";
@@ -91,6 +92,9 @@ namespace QuickStackPlus
                 case "nearby":
                 case "boxes":
                     mode = QuickStackMode.Nearby;
+                    return true;
+                case "type":
+                    mode = QuickStackMode.NearbyType;
                     return true;
                 case "vehicle":
                 case "match":

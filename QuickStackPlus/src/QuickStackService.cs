@@ -28,7 +28,7 @@ namespace QuickStackPlus
 
             if (world == null || player == null || player.bag == null || player.IsDead())
             {
-                result.Outcome = mode == QuickStackMode.Nearby
+                result.Outcome = IsBoxMode(mode)
                     ? QuickStackOutcome.NoStorage
                     : QuickStackOutcome.NoVehicle;
                 return result;
@@ -36,7 +36,7 @@ namespace QuickStackPlus
 
             if (!RunningPlayers.Add(player.entityId))
             {
-                result.Outcome = mode == QuickStackMode.Nearby
+                result.Outcome = IsBoxMode(mode)
                     ? QuickStackOutcome.Busy
                     : QuickStackOutcome.VehicleBusy;
                 return result;
@@ -51,9 +51,9 @@ namespace QuickStackPlus
                     PullBag(player, client);
                 }
 
-                if (mode == QuickStackMode.Nearby)
+                if (IsBoxMode(mode))
                 {
-                    StackToBoxes(world, player, userId, result);
+                    StackToBoxes(world, player, userId, mode == QuickStackMode.NearbyType, result);
                 }
                 else
                 {
@@ -99,10 +99,16 @@ namespace QuickStackPlus
             client.latestPlayerData.bModifiedSinceLastSave = true;
         }
 
+        static bool IsBoxMode(QuickStackMode mode)
+        {
+            return mode == QuickStackMode.Nearby || mode == QuickStackMode.NearbyType;
+        }
+
         static void StackToBoxes(
             World world,
             EntityPlayer player,
             PlatformUserIdentifierAbs userId,
+            bool matchType,
             QuickStackResult result)
         {
             int skippedBusy = 0;
@@ -132,11 +138,26 @@ namespace QuickStackPlus
                     return;
                 }
 
-                int containers = MoveFromBackpack(player.bag, open, false, result);
+                bool hadMatchingType;
+                int containers = MoveFromBackpack(
+                    player.bag,
+                    open,
+                    matchType ? MoveStyle.TypeThenEmpty : MoveStyle.TopOff,
+                    result,
+                    out hadMatchingType);
                 result.ContainerCount = containers;
-                result.Outcome = result.MovedItemCount > 0
-                    ? QuickStackOutcome.Moved
-                    : QuickStackOutcome.NoMatch;
+                if (result.MovedItemCount > 0)
+                {
+                    result.Outcome = QuickStackOutcome.Moved;
+                }
+                else if (matchType && hadMatchingType)
+                {
+                    result.Outcome = QuickStackOutcome.NoRoom;
+                }
+                else
+                {
+                    result.Outcome = QuickStackOutcome.NoMatch;
+                }
             }
             finally
             {
@@ -178,7 +199,12 @@ namespace QuickStackPlus
                 {
                     new BoxTarget(null, vehicle, 0f)
                 };
-                int changed = MoveFromBackpack(player.bag, targets, allowEmptySlots, result);
+                int changed = MoveFromBackpack(
+                    player.bag,
+                    targets,
+                    allowEmptySlots ? MoveStyle.AllThenEmpty : MoveStyle.TopOff,
+                    result,
+                    out _);
                 if (changed > 0)
                 {
                     vehicle.SetBagModified();
@@ -202,15 +228,25 @@ namespace QuickStackPlus
             }
         }
 
+        enum MoveStyle
+        {
+            TopOff,
+            TypeThenEmpty,
+            AllThenEmpty
+        }
+
         static int MoveFromBackpack(
             Bag bag,
             List<BoxTarget> targets,
-            bool allowEmptySlots,
-            QuickStackResult result)
+            MoveStyle style,
+            QuickStackResult result,
+            out bool hadMatchingType)
         {
             var changedSlots = new HashSet<int>();
             var changedTargets = new HashSet<int>();
+            var eligible = new List<int>();
             ItemStackGrid grid = bag.ItemGrid;
+            hadMatchingType = false;
 
             for (int slot = 0; slot < grid.Length; slot++)
             {
@@ -225,18 +261,40 @@ namespace QuickStackPlus
                     continue;
                 }
 
-                int before = stack.count;
-                for (int i = 0; i < targets.Count && stack.count > 0; i++)
+                eligible.Clear();
+                for (int i = 0; i < targets.Count; i++)
                 {
                     if (!CanEnter(stack, targets[i]))
                     {
                         continue;
                     }
 
-                    (bool anyMoved, bool _) = TryStack(targets[i], stack);
+                    if (style == MoveStyle.TypeThenEmpty && !ContainsType(targets[i], stack))
+                    {
+                        continue;
+                    }
+
+                    eligible.Add(i);
+                }
+
+                if (style == MoveStyle.TypeThenEmpty)
+                {
+                    if (eligible.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    hadMatchingType = true;
+                }
+
+                int before = stack.count;
+                for (int n = 0; n < eligible.Count && stack.count > 0; n++)
+                {
+                    int index = eligible[n];
+                    (bool anyMoved, bool _) = TryStack(targets[index], stack);
                     if (anyMoved)
                     {
-                        changedTargets.Add(i);
+                        changedTargets.Add(index);
                     }
                 }
 
@@ -244,53 +302,24 @@ namespace QuickStackPlus
                 {
                     ClearSlot(stack);
                 }
-
-                if (stack.count != before || stack.IsEmpty() && before > 0)
+                else if (style != MoveStyle.TopOff)
                 {
-                    changedSlots.Add(slot);
-                    result.MovedItemCount += before - (stack.IsEmpty() ? 0 : stack.count);
-                }
-            }
-
-            if (allowEmptySlots)
-            {
-                for (int slot = 0; slot < grid.Length; slot++)
-                {
-                    if (grid.IsSlotLocked(slot))
+                    for (int n = 0; n < eligible.Count && stack.count > 0; n++)
                     {
-                        continue;
-                    }
-
-                    ItemStack stack = grid[slot];
-                    if (stack == null || stack.IsEmpty())
-                    {
-                        continue;
-                    }
-
-                    int before = stack.count;
-                    for (int i = 0; i < targets.Count && stack.count > 0; i++)
-                    {
-                        if (!CanEnter(stack, targets[i]))
+                        int index = eligible[n];
+                        if (PlaceInEmpty(targets[index], stack))
                         {
-                            continue;
-                        }
-
-                        if (PlaceInEmpty(targets[i], stack))
-                        {
-                            changedTargets.Add(i);
+                            changedTargets.Add(index);
                             break;
                         }
                     }
+                }
 
-                    if (before != stack.count || stack.IsEmpty())
-                    {
-                        int left = stack.IsEmpty() ? 0 : stack.count;
-                        if (left != before)
-                        {
-                            changedSlots.Add(slot);
-                            result.MovedItemCount += before - left;
-                        }
-                    }
+                int left = stack.IsEmpty() ? 0 : stack.count;
+                if (left != before)
+                {
+                    changedSlots.Add(slot);
+                    result.MovedItemCount += before - left;
                 }
             }
 
@@ -300,6 +329,45 @@ namespace QuickStackPlus
             }
 
             return changedTargets.Count;
+        }
+
+        // Identity test from ItemStack.CanStackWith, without the "room left in the stack" check.
+        // Quality and mods are not compared; TryStackItem does not compare them either.
+        static bool SameItemType(ItemStack source, ItemStack existing)
+        {
+            ItemValue left = source?.itemValue;
+            ItemValue right = existing?.itemValue;
+            if (left == null || right == null || left.type == 0 || left.type != right.type)
+            {
+                return false;
+            }
+
+            if (left.type < Block.ItemsStartHere)
+            {
+                return left.IsShapeHelperBlock || left.TextureFullArray == right.TextureFullArray;
+            }
+
+            return true;
+        }
+
+        static bool ContainsType(BoxTarget target, ItemStack source)
+        {
+            ItemStackGrid grid = target.Storage?.ItemGrid;
+            if (grid == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < grid.Length; i++)
+            {
+                ItemStack slot = grid[i];
+                if (slot != null && !slot.IsEmpty() && SameItemType(source, slot))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         static bool CanEnter(ItemStack stack, BoxTarget target)
@@ -324,13 +392,13 @@ namespace QuickStackPlus
 
         static bool PlaceInEmpty(BoxTarget target, ItemStack stack)
         {
-            Bag bag = target.Vehicle != null ? target.Vehicle.bag : null;
-            if (bag == null)
+            ItemStackGrid grid = target.Vehicle != null
+                ? target.Vehicle.bag?.ItemGrid
+                : target.Storage?.ItemGrid;
+            if (grid == null)
             {
                 return false;
             }
-
-            ItemStackGrid grid = bag.ItemGrid;
             for (int i = 0; i < grid.Length; i++)
             {
                 if (grid.IsSlotLocked(i) || !grid[i].IsEmpty())
