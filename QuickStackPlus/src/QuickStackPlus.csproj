@@ -10,9 +10,9 @@
     <Deterministic>true</Deterministic>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>$(MSBuildProjectDirectory)\..\..\.build\</OutputPath>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
     <DebugType>portable</DebugType>
     <!-- Pass -p:Managed7D2D and -p:Harmony7D2D. Do not commit the game DLLs. -->
     <Managed7D2D Condition="'$(Managed7D2D)' == ''"></Managed7D2D>

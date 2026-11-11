@@ -87,10 +87,10 @@ The project was built with 0 warnings and 0 errors against the V3.4.0 (b6) assem
 `Config/XUi_InGame/windows.xml` appends the three buttons with:
 
 ```text
-/windows/window[@name='windowBackpack']/rect[@name='header']/rect[@controller='ContainerStandardControls']
+/windows/window[@name='windowBackpack']/rect[@name='header']
 ```
 
-The button names (`btnToggleLockMode`, `btnSort`, `btnMoveFillAndSmart`, `btnMoveAll`) match `XUiC_BackpackWindow` and `XUiC_ContainerStandardControls` in the 3.4.0b6 `Assembly-CSharp.dll`. The window name, the `header` rect, and the `controller="ContainerStandardControls"` attribute are the layout from the public modding wiki's `XUi_InGame/windows.xml` and from the V3.1 Quick Stack Nearby patch. **The vanilla `Data/Config` XUi files for build 26167630 were not in the reference DLLs, so that xpath and the button positions are not confirmed against those exact files.** If the log says a backpack button was not found, the xpath missed and `qsp` still works.
+That path matches exactly one node in `Data/Config/XUi_InGame/windows.xml` from V3.4.0 (b6). `windowBackpack` has three children: `header`, `actions` (that rect carries `controller="ContainerStandardControls"` at `pos="0,-46"`), and `content`. The controls rect is a sibling of the header. Button centers are `165,-22`, `201,-22`, and `237,-22`, just right of the INVENTORY label and clear of the creative trash button at `380,-22` and the currency label at `492`. Sprites are `ui_game_symbol_store_similar_up`, `ui_game_symbol_minibike`, and `ui_game_symbol_store_all_up`, all present in that vanilla file. The buttons are still descendants of the backpack window, so `GetChildById` in the `XUiC_BackpackWindow.Init` patch finds them. `qsp` remains available if the window is patched by something else.
 
 `Config/Localization.csv` and `ModInfo.xml` are well-formed XML/CSV. `settings.xml` sits next to `ModInfo.xml`, not under `Config/`, so the game's XML patcher does not treat it as a vanilla file.
 
@@ -98,7 +98,7 @@ The button names (`btnToggleLockMode`, `btnSort`, `btnMoveFillAndSmart`, `btnMov
 
 These cannot be confirmed from the compile:
 
-- The three buttons appear on the backpack window and do not cover the lock, sort, or currency readout. Nudge the `pos` values in `windows.xml` if they do. Creative mode's trash button sits near these icons.
+- The three buttons appear in the backpack header, just right of the INVENTORY title, clear of the creative trash button and the coin readout.
 - Keypad7 / Keypad8 / Keypad9 fire only while you are not typing.
 - A locked backpack slot and every toolbelt slot stay put in all three modes.
 - Nearby mode fills a partial stack and does not create a new stack, including when the box already contains that item and has an empty slot.
